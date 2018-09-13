@@ -22,7 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+# encoding: utf-8
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -60,16 +60,16 @@ class LFold:
 
 
 def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_folds=10, pca = 0):
-    assert(embeddings1.shape[0] == embeddings2.shape[0])
-    assert(embeddings1.shape[1] == embeddings2.shape[1])
-    nrof_pairs = min(len(actual_issame), embeddings1.shape[0])
-    nrof_thresholds = len(thresholds)
-    k_fold = LFold(n_splits=nrof_folds, shuffle=False)
+    assert(embeddings1.shape[0] == embeddings2.shape[0])#6000
+    assert(embeddings1.shape[1] == embeddings2.shape[1])#512
+    nrof_pairs = min(len(actual_issame), embeddings1.shape[0])#6000
+    nrof_thresholds = len(thresholds)#400
+    k_fold = LFold(n_splits=nrof_folds, shuffle=False)#nrof_folds=10, split part 10
     
     tprs = np.zeros((nrof_folds,nrof_thresholds))
     fprs = np.zeros((nrof_folds,nrof_thresholds))
     accuracy = np.zeros((nrof_folds))
-    indices = np.arange(nrof_pairs)
+    indices = np.arange(nrof_pairs)#6000num
     #print('pca', pca)
     
     if pca==0:
@@ -97,13 +97,14 @@ def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_fold
         
         # Find the best threshold for the fold
         acc_train = np.zeros((nrof_thresholds))
-        for threshold_idx, threshold in enumerate(thresholds):
+        for threshold_idx, threshold in enumerate(thresholds):#len(thresholds)=400
             _, _, acc_train[threshold_idx] = calculate_accuracy(threshold, dist[train_set], actual_issame[train_set])
         best_threshold_index = np.argmax(acc_train)
         #print('threshold', thresholds[best_threshold_index])
-        for threshold_idx, threshold in enumerate(thresholds):
+        for threshold_idx, threshold in enumerate(thresholds):#len(thresholds)=400
             tprs[fold_idx,threshold_idx], fprs[fold_idx,threshold_idx], _ = calculate_accuracy(threshold, dist[test_set], actual_issame[test_set])
-        _, _, accuracy[fold_idx] = calculate_accuracy(thresholds[best_threshold_index], dist[test_set], actual_issame[test_set])
+        tpr, fpr, accuracy[fold_idx] = calculate_accuracy(thresholds[best_threshold_index], dist[test_set], actual_issame[test_set])
+        print(best_threshold_index, thresholds[best_threshold_index], acc_train[best_threshold_index], accuracy[fold_idx], tpr, (1-fpr))
           
     tpr = np.mean(tprs,0)
     fpr = np.mean(fprs,0)
@@ -171,7 +172,7 @@ def calculate_val_far(threshold, dist, actual_issame):
 
 def evaluate(embeddings, actual_issame, nrof_folds=10, pca = 0):
     # Calculate evaluation metrics
-    thresholds = np.arange(0, 4, 0.01)
+    thresholds = np.arange(0, 4, 0.01)#400=(0, 0.01, 0.02...3.99)
     embeddings1 = embeddings[0::2]
     embeddings2 = embeddings[1::2]
     tpr, fpr, accuracy = calculate_roc(thresholds, embeddings1, embeddings2,
@@ -213,6 +214,8 @@ def test(data_set, mx_model, batch_size, nfolds=10, data_extra = None, label_sha
     _label = nd.ones( (batch_size,) )
   else:
     _label = nd.ones( label_shape )
+
+  print(len(data_list))
   for i in xrange( len(data_list) ):
     data = data_list[i]
     embeddings = None
@@ -242,6 +245,7 @@ def test(data_set, mx_model, batch_size, nfolds=10, data_extra = None, label_sha
       #exe.forward(is_train=False)
       #net_out = exe.outputs
       _embeddings = net_out[0].asnumpy()
+      # print(_embeddings.shape)
       time_now = datetime.datetime.now()
       diff = time_now - time0
       time_consumed+=diff.total_seconds()
@@ -273,10 +277,13 @@ def test(data_set, mx_model, batch_size, nfolds=10, data_extra = None, label_sha
   #print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
   #embeddings = np.concatenate(embeddings_list, axis=1)
   embeddings = embeddings_list[0] + embeddings_list[1]
+  print(embeddings_list[0].shape, embeddings_list[1].shape, embeddings.shape)
+
   embeddings = sklearn.preprocessing.normalize(embeddings)
   print(embeddings.shape)
   print('infer time', time_consumed)
   _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=nfolds)
+  print("len(accuracy):", len(accuracy))
   acc2, std2 = np.mean(accuracy), np.std(accuracy)
   return acc1, std1, acc2, std2, _xnorm, embeddings_list
 

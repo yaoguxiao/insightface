@@ -384,7 +384,6 @@ def train_net(args):
         print('ver', name)
 
 
-
     def ver_test(nbatch):
       results = []
       for i in xrange(len(ver_list)):
@@ -394,8 +393,6 @@ def train_net(args):
         print('[%s][%d]Accuracy-Flip: %1.5f+-%1.5f' % (ver_name_list[i], nbatch, acc2, std2))
         results.append(acc2)
       return results
-
-
 
     highest_acc = [0.0, 0.0]  #lfw and target
     #for i in xrange(len(ver_list)):
