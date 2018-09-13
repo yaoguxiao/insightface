@@ -190,8 +190,8 @@ def load_bin(path, image_size):
     data_list.append(data)
   for i in xrange(len(issame_list)*2):
     _bin = bins[i]
-    img = mx.image.imdecode(_bin)
-    img = nd.transpose(img, axes=(2, 0, 1))
+    img = mx.image.imdecode(_bin)#112*112*3
+    img = nd.transpose(img, axes=(2, 0, 1))#3*112*112
     for flip in [0,1]:
       if flip==1:
         img = mx.ndarray.flip(data=img, axis=2)
@@ -276,10 +276,10 @@ def test(data_set, mx_model, batch_size, nfolds=10, data_extra = None, label_sha
 
   #print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
   #embeddings = np.concatenate(embeddings_list, axis=1)
-  embeddings = embeddings_list[0] + embeddings_list[1]
+  # embeddings = embeddings_list[0] + embeddings_list[1]
   print(embeddings_list[0].shape, embeddings_list[1].shape, embeddings.shape)
 
-  embeddings = sklearn.preprocessing.normalize(embeddings)
+  # embeddings = sklearn.preprocessing.normalize(embeddings)
   print(embeddings.shape)
   print('infer time', time_consumed)
   _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=nfolds)
